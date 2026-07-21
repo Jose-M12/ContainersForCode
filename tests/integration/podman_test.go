@@ -20,21 +20,20 @@ func TestRootlessPodmanRawRun(t *testing.T) {
 		t.Fatal("Podman integration requested, but podman is not on PATH")
 	}
 
-	info := exec.Command("podman", "info", "--format", "{{.Host.Security.Rootless}}")
+	info := exec.Command("podman", "info", "--format", "json")
 	output, err := info.CombinedOutput()
 	if err != nil {
 		t.Fatalf("podman info: %v\n%s", err, output)
 	}
-	if strings.TrimSpace(string(output)) != "true" {
-		t.Fatalf("integration tests require rootless Podman; got %q", strings.TrimSpace(string(output)))
-	}
-	cgroups := exec.Command("podman", "info", "--format", "{{.Host.CgroupVersion}}")
-	cgroupOutput, err := cgroups.CombinedOutput()
+	rootless, cgroupVersion, err := decodePodmanInfo(output)
 	if err != nil {
-		t.Fatalf("read Podman cgroup version: %v\n%s", err, cgroupOutput)
+		t.Fatalf("decode podman info: %v\n%s", err, output)
 	}
-	if got := strings.TrimSpace(string(cgroupOutput)); got != "v2" && got != "2" {
-		t.Fatalf("integration tests require cgroups v2; got %q", got)
+	if !rootless {
+		t.Fatal("integration tests require rootless Podman; Podman reports rootless=false")
+	}
+	if cgroupVersion != "v2" && cgroupVersion != "2" {
+		t.Fatalf("integration tests require cgroups v2; got %q", cgroupVersion)
 	}
 
 	binary, err := filepath.Abs(filepath.Join("..", "..", "bin", "cagent"))

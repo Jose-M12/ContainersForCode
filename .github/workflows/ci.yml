@@ -61,9 +61,9 @@ jobs:
           fi
       - name: Require rootless Podman and cgroups v2
         run: |
-          test "$(podman info --format '{{.Host.Security.Rootless}}')" = "true"
-          cgroup_version="$(podman info --format '{{.Host.CgroupVersion}}')"
-          test "${cgroup_version}" = "v2" -o "${cgroup_version}" = "2"
+          podman_info="$(podman info --format json)"
+          jq -e '.host.security.rootless == true' <<<"${podman_info}"
+          jq -e '(.host.cgroupVersion == "v2") or (.host.cgroupVersion == "2") or (.host.cgroupVersion == 2)' <<<"${podman_info}"
       - name: Full managed lifecycle integration
         run: make integration
       - name: Verify integration left no managed containers
