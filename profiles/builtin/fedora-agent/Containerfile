@@ -1,0 +1,14 @@
+FROM registry.fedoraproject.org/fedora-minimal:latest@sha256:20abc386771c43ea90126eed66a5dbba7d3ab5fbc3073c3115ad68dd7e390e78
+
+RUN microdnf install -y \
+      bash ca-certificates curl findutils git jq nodejs npm procps-ng python3 shadow-utils sudo \
+    && microdnf clean all \
+    && groupadd --gid 1000 agent \
+    && useradd --uid 1000 --gid 1000 --create-home --shell /bin/bash agent \
+    && printf 'agent ALL=(ALL) NOPASSWD:ALL\n' >/etc/sudoers.d/90-cagent-agent \
+    && chmod 0440 /etc/sudoers.d/90-cagent-agent \
+    && mkdir -p /workspace \
+    && chown agent:agent /workspace
+
+USER agent
+WORKDIR /workspace

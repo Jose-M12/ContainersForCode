@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://containersagents.dev/schemas/defaults-v1.schema.json",
+  "title": "ContainersAgents V2 Defaults",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "spec"],
+  "properties": {
+    "apiVersion": { "const": "containersagents.dev/v2alpha1" },
+    "kind": { "const": "Defaults" },
+    "spec": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "securityClass": { "enum": ["sandbox", "development", "integration", "elevated-lab"] },
+        "resourceClass": { "enum": ["battery", "balanced", "performance", "custom"] },
+        "allowedMountRoots": { "type": "array", "items": { "type": "string", "pattern": "^/" }, "uniqueItems": true },
+        "strictResources": { "type": "boolean" },
+        "auditMaxMiB": { "type": "integer", "minimum": 1, "maximum": 1024 },
+        "stopOnShellExit": { "type": "boolean" }
+      }
+    }
+  }
+}

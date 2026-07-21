@@ -1,0 +1,12 @@
+{
+  "apiVersion": "containersagents.dev/v2alpha1",
+  "kind": "Defaults",
+  "spec": {
+    "securityClass": "development",
+    "resourceClass": "balanced",
+    "allowedMountRoots": ["/home/user/Customers", "/home/user/Development"],
+    "strictResources": true,
+    "auditMaxMiB": 10,
+    "stopOnShellExit": true
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://containersagents.dev/schemas/profile-v1.schema.json",
+  "title": "ContainersAgents V2 Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "containersagents.dev/v2alpha1" },
+    "kind": { "const": "Profile" },
+    "metadata": { "$ref": "#/$defs/metadata" },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["image", "runtime"],
+      "properties": {
+        "image": { "$ref": "#/$defs/image" },
+        "runtime": { "$ref": "#/$defs/runtime" },
+        "features": { "type": "array", "items": { "$ref": "#/$defs/name" }, "uniqueItems": true },
+        "defaults": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "securityClass": { "$ref": "#/$defs/securityClass" },
+            "resourceClass": { "$ref": "#/$defs/resourceClass" },
+            "rootfsPersistence": { "$ref": "#/$defs/rootfs" }
+          }
+        },
+        "minimumResources": { "$ref": "#/$defs/resources" },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["name", "command"],
+            "properties": {
+              "name": { "$ref": "#/$defs/name" },
+              "command": { "$ref": "#/$defs/command" },
+              "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 3600 }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "name": { "type": "string", "minLength": 1, "maxLength": 63, "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+    "metadata": { "type": "object", "additionalProperties": false, "required": ["name"], "properties": { "name": { "$ref": "#/$defs/name" } } },
+    "command": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "securityClass": { "enum": ["sandbox", "development", "integration", "elevated-lab"] },
+    "resourceClass": { "enum": ["battery", "balanced", "performance", "custom"] },
+    "rootfs": { "enum": ["persistent", "recreate", "ephemeral", "read-only"] },
+    "image": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": { "enum": ["build", "pull", "existing"] },
+	        "repository": { "type": "string", "pattern": "^[^-\\s][^\\s]*$" },
+	        "reference": { "type": "string", "pattern": "^[^-\\s][^\\s]*$" },
+        "containerfile": { "type": "string" },
+        "context": { "type": "string" },
+        "pullPolicy": { "enum": ["always", "missing", "newer", "never"] },
+        "buildArgs": { "type": "object", "additionalProperties": { "type": "string" }, "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" } },
+        "buildSecrets": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": false, "required": ["name", "id"], "properties": { "name": { "type": "string" }, "id": { "type": "string" } } }
+        },
+        "target": { "type": "string" }
+      },
+      "allOf": [
+        { "if": { "properties": { "mode": { "const": "build" } } }, "then": { "required": ["repository", "containerfile", "context"] } },
+        { "if": { "properties": { "mode": { "enum": ["pull", "existing"] } } }, "then": { "required": ["reference"] } }
+      ]
+    },
+    "runtime": {
+      "type": "object", "additionalProperties": false,
+      "required": ["home", "workdir", "shell", "keepalive", "identityMode"],
+      "properties": {
+        "user": { "type": "string" },
+        "uid": { "type": "integer", "minimum": 1 },
+        "gid": { "type": "integer", "minimum": 1 },
+	        "home": { "type": "string", "pattern": "^/[^,:]+$" },
+        "workdir": { "type": "string", "pattern": "^/" },
+        "shell": { "$ref": "#/$defs/command" },
+        "keepalive": { "$ref": "#/$defs/command" },
+        "identityMode": { "enum": ["managed-user", "image-user", "explicit", "rootless-container-root"] },
+        "allowSudo": { "type": "boolean" },
+        "caBundle": { "type": "string", "pattern": "^/" }
+      }
+    },
+    "resources": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "memoryMiB": { "type": "integer", "minimum": 0 },
+        "cpus": { "type": "number", "minimum": 0 },
+        "pids": { "type": "integer", "minimum": 0 },
+        "shmMiB": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

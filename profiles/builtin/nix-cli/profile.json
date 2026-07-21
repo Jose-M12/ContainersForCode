@@ -1,0 +1,26 @@
+{
+  "apiVersion": "containersagents.dev/v2alpha1",
+  "kind": "Profile",
+  "metadata": { "name": "nix-cli" },
+  "spec": {
+    "image": {
+      "mode": "pull",
+      "reference": "docker.io/nixos/nix:latest@sha256:377d4887aca98f0dfa12971c1ea6d6a625a435d8b610d4c95a436843da6fbfd1",
+      "pullPolicy": "missing"
+    },
+    "runtime": {
+      "user": "root",
+      "home": "/root",
+      "workdir": "/workspace",
+      "shell": ["/bin/sh"],
+      "keepalive": ["sleep", "infinity"],
+      "identityMode": "rootless-container-root"
+    },
+    "features": ["nix-cli"],
+    "defaults": { "securityClass": "development", "resourceClass": "balanced", "rootfsPersistence": "persistent" },
+    "minimumResources": { "memoryMiB": 1024, "cpus": 1, "pids": 512, "shmMiB": 128 },
+    "checks": [
+      { "name": "nix", "command": ["nix", "--version"] }
+    ]
+  }
+}

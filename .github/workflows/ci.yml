@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Unit, coverage, race, and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Static checks and unit tests
+        run: make check
+      - name: Coverage regression gates
+        run: make coverage
+      - name: Race detector
+        run: go test -race ./...
+      - name: Go vulnerability scan
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
+      - name: Release build
+        run: make build VERSION=ci COMMIT="${GITHUB_SHA}" BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      - name: Cross-compile CLI
+        run: |
+          GOOS=darwin GOARCH=arm64 go build -trimpath -buildvcs=false -o /tmp/cagent-darwin-arm64 ./cmd/cagent
+          GOOS=windows GOARCH=amd64 go build -trimpath -buildvcs=false -o /tmp/cagent-windows-amd64.exe ./cmd/cagent
+
+  rootless-podman:
+    name: Rootless Podman / cgroups v2 integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Install rootless Podman runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes podman uidmap slirp4netns fuse-overlayfs
+          current_user="$(id -un)"
+          if ! grep -q "^${current_user}:" /etc/subuid; then
+            sudo usermod --add-subuids 100000-165535 "${current_user}"
+          fi
+          if ! grep -q "^${current_user}:" /etc/subgid; then
+            sudo usermod --add-subgids 100000-165535 "${current_user}"
+          fi
+      - name: Require rootless Podman and cgroups v2
+        run: |
+          test "$(podman info --format '{{.Host.Security.Rootless}}')" = "true"
+          cgroup_version="$(podman info --format '{{.Host.CgroupVersion}}')"
+          test "${cgroup_version}" = "v2" -o "${cgroup_version}" = "2"
+      - name: Full managed lifecycle integration
+        run: make integration
+      - name: Verify integration left no managed containers
+        if: always()
+        run: |
+          remaining="$(podman container ps --all --quiet --filter label=io.containersagents.v2.managed=true)"
+          if test -n "${remaining}"; then
+            podman container rm --force ${remaining}
+            exit 1
+          fi

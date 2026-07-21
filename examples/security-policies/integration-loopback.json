@@ -1,0 +1,16 @@
+{
+  "apiVersion": "containersagents.dev/v2alpha1",
+  "kind": "Environment",
+  "metadata": { "name": "integration-loopback" },
+  "spec": {
+    "profile": "ubuntu-implementation",
+    "securityClass": "integration",
+    "resourceClass": "balanced",
+    "network": {
+      "mode": "integration",
+      "ports": [
+        { "hostIP": "127.0.0.1", "hostPort": 8080, "containerPort": 8080, "protocol": "tcp" }
+      ]
+    }
+  }
+}

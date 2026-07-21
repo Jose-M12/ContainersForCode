@@ -1,0 +1,39 @@
+{
+  "apiVersion": "containersagents.dev/v2alpha1",
+  "kind": "Profile",
+  "metadata": { "name": "debian-agent" },
+  "spec": {
+    "image": {
+      "mode": "build",
+      "repository": "localhost/containersagents-v2/debian-agent",
+      "containerfile": "Containerfile",
+      "context": ".",
+      "pullPolicy": "newer"
+    },
+    "runtime": {
+      "user": "agent",
+      "uid": 1000,
+      "gid": 1000,
+      "home": "/home/agent",
+      "workdir": "/workspace",
+      "shell": ["/bin/bash", "--login"],
+      "keepalive": ["sleep", "infinity"],
+      "identityMode": "managed-user",
+      "allowSudo": true,
+      "caBundle": "/etc/ssl/certs/ca-certificates.crt"
+    },
+    "features": ["common-cli", "python-development", "node-development"],
+    "defaults": {
+      "securityClass": "development",
+      "resourceClass": "balanced",
+      "rootfsPersistence": "persistent"
+    },
+    "minimumResources": { "memoryMiB": 1024, "cpus": 1, "pids": 512, "shmMiB": 128 },
+    "checks": [
+      { "name": "shell", "command": ["/bin/bash", "--version"] },
+      { "name": "git", "command": ["git", "--version"] },
+      { "name": "python", "command": ["python3", "--version"] },
+      { "name": "node", "command": ["node", "--version"] }
+    ]
+  }
+}

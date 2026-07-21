@@ -1,0 +1,22 @@
+{
+  "apiVersion": "containersagents.dev/v2alpha1",
+  "kind": "Environment",
+  "metadata": { "name": "eve-acme-powershell" },
+  "spec": {
+    "profile": "pwsh-dotnet",
+    "project": {
+      "source": "/home/user/Customers/Acme/implementation",
+      "target": "/workspace",
+      "mode": "read-write"
+    },
+    "home": { "persistence": "per-environment" },
+    "rootfs": { "persistence": "persistent" },
+    "securityClass": "integration",
+    "resourceClass": "balanced",
+    "concurrency": { "projectMode": "exclusive" },
+    "network": { "mode": "integration", "ports": [] },
+    "secrets": [
+      { "name": "acme-api-token", "target": "/run/secrets/acme-api-token", "mode": 256 }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+FROM docker.io/library/debian:trixie-slim@sha256:020c0d20b9880058cbe785a9db107156c3c75c2ac944a6aa7ab59f2add76a7bd
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+       bash ca-certificates curl git jq nodejs npm passwd procps python3 python3-venv sudo \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 1000 agent \
+    && useradd --uid 1000 --gid 1000 --create-home --shell /bin/bash agent \
+    && printf 'agent ALL=(ALL) NOPASSWD:ALL\n' >/etc/sudoers.d/90-cagent-agent \
+    && chmod 0440 /etc/sudoers.d/90-cagent-agent \
+    && mkdir -p /workspace \
+    && chown agent:agent /workspace
+
+USER agent
+WORKDIR /workspace

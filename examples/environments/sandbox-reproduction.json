@@ -1,0 +1,19 @@
+{
+  "apiVersion": "containersagents.dev/v2alpha1",
+  "kind": "Environment",
+  "metadata": { "name": "sandbox-reproduction" },
+  "spec": {
+    "profile": "debian-agent",
+    "project": {
+      "source": "/home/user/Reproductions/case-001",
+      "target": "/workspace",
+      "mode": "read-only"
+    },
+    "home": { "persistence": "ephemeral" },
+    "rootfs": { "persistence": "read-only" },
+    "securityClass": "sandbox",
+    "resourceClass": "battery",
+    "concurrency": { "projectMode": "read-only-secondary" },
+    "network": { "mode": "none", "ports": [] }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "apiVersion": "containersagents.dev/v2alpha1",
+  "kind": "Profile",
+  "metadata": { "name": "ubuntu-implementation" },
+  "spec": {
+    "image": {
+      "mode": "build",
+      "repository": "localhost/containersagents-v2/ubuntu-implementation",
+      "containerfile": "Containerfile",
+      "context": ".",
+      "pullPolicy": "newer"
+    },
+    "runtime": {
+      "user": "agent", "uid": 1000, "gid": 1000,
+      "home": "/home/agent", "workdir": "/workspace",
+      "shell": ["/bin/bash", "--login"],
+      "keepalive": ["sleep", "infinity"],
+      "identityMode": "managed-user", "allowSudo": true,
+      "caBundle": "/etc/ssl/certs/ca-certificates.crt"
+    },
+    "features": ["common-cli", "python-development", "node-development"],
+    "defaults": { "securityClass": "development", "resourceClass": "balanced", "rootfsPersistence": "persistent" },
+    "minimumResources": { "memoryMiB": 1024, "cpus": 1, "pids": 512, "shmMiB": 128 },
+    "checks": [
+      { "name": "ubuntu", "command": ["cat", "/etc/os-release"] },
+      { "name": "git", "command": ["git", "--version"] },
+      { "name": "curl", "command": ["curl", "--version"] }
+    ]
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://containersagents.dev/schemas/environment-v1.schema.json",
+  "title": "ContainersAgents V2 Environment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "containersagents.dev/v2alpha1" },
+    "kind": { "const": "Environment" },
+    "metadata": { "$ref": "#/$defs/metadata" },
+    "spec": {
+      "type": "object", "additionalProperties": false, "required": ["profile"],
+      "properties": {
+        "profile": { "$ref": "#/$defs/name" },
+        "project": { "$ref": "#/$defs/mount" },
+        "home": { "type": "object", "additionalProperties": false, "properties": { "persistence": { "enum": ["per-environment", "ephemeral", "none"] } } },
+        "rootfs": { "type": "object", "additionalProperties": false, "properties": { "persistence": { "enum": ["persistent", "recreate", "ephemeral", "read-only"] } } },
+        "securityClass": { "$ref": "#/$defs/securityClass" },
+        "resourceClass": { "$ref": "#/$defs/resourceClass" },
+        "security": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "capabilities": { "type": "array", "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]+$" }, "uniqueItems": true },
+            "noNewPrivileges": { "type": "boolean" }
+          }
+        },
+        "resources": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "memoryMiB": { "type": "integer", "minimum": 0 }, "swapMiB": { "type": "integer", "minimum": 0 },
+            "cpus": { "type": "number", "minimum": 0 }, "pids": { "type": "integer", "minimum": 0 },
+            "shmMiB": { "type": "integer", "minimum": 0 }, "buildJobs": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "concurrency": { "type": "object", "additionalProperties": false, "properties": { "projectMode": { "enum": ["exclusive", "allow", "read-only-secondary", "prompt"] } } },
+        "network": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "mode": { "enum": ["none", "outbound", "internal", "integration"] },
+            "ports": {
+              "type": "array",
+              "items": {
+                "type": "object", "additionalProperties": false, "required": ["hostPort", "containerPort"],
+                "properties": {
+                  "hostIP": { "type": "string" }, "hostPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                  "containerPort": { "type": "integer", "minimum": 1, "maximum": 65535 }, "protocol": { "enum": ["tcp", "udp"] }
+                }
+              }
+            }
+          }
+        },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["name", "target"],
+            "properties": {
+	              "name": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,252}$" }, "target": { "type": "string", "pattern": "^/run/secrets(?:/|$)[^,]*$" },
+              "uid": { "type": "integer", "minimum": 0 }, "gid": { "type": "integer", "minimum": 0 }, "mode": { "type": "integer" }
+            }
+          }
+        },
+        "mounts": { "type": "array", "items": { "$ref": "#/$defs/mount" } },
+        "certificates": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": false, "required": ["source"], "properties": { "source": { "type": "string" }, "name": { "type": "string" } } }
+        },
+        "proxy": {
+          "type": "object", "additionalProperties": false,
+          "properties": { "http": { "type": "string", "format": "uri" }, "https": { "type": "string", "format": "uri" }, "noProxy": { "type": "array", "items": { "type": "string" } } }
+        },
+        "environment": { "type": "object", "additionalProperties": { "type": "string" }, "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" } }
+      }
+    }
+  },
+  "$defs": {
+    "name": { "type": "string", "minLength": 1, "maxLength": 63, "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+    "metadata": { "type": "object", "additionalProperties": false, "required": ["name"], "properties": { "name": { "$ref": "#/$defs/name" } } },
+    "securityClass": { "enum": ["sandbox", "development", "integration", "elevated-lab"] },
+    "resourceClass": { "enum": ["battery", "balanced", "performance", "custom"] },
+    "mount": {
+      "type": "object", "additionalProperties": false, "required": ["source"],
+      "properties": {
+	        "source": { "type": "string", "pattern": "^[^,]+$" }, "target": { "type": "string", "pattern": "^/[^,]*$" },
+	        "mode": { "enum": ["read-only", "read-write"] }, "shared": { "const": false }
+      }
+    }
+  }
+}

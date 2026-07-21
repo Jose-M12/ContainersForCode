@@ -1,0 +1,18 @@
+FROM mcr.microsoft.com/powershell:latest@sha256:810c4f1e0c9d23022c3ec18c50a6205ee4b60766f1739d329b2948df1fd7d5b0 AS powershell
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble@sha256:ed034a8bf0b24ded0cbbac07e17825d8e9ebfe21e308191d0f7421eaf5ad4664
+
+ARG DEBIAN_FRONTEND=noninteractive
+COPY --from=powershell /opt/microsoft/powershell/7 /opt/microsoft/powershell/7
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends ca-certificates curl git jq passwd procps sudo \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /opt/microsoft/powershell/7/pwsh /usr/local/bin/pwsh \
+    && groupadd --gid 1000 agent \
+    && useradd --uid 1000 --gid 1000 --create-home --shell /usr/local/bin/pwsh agent \
+    && printf 'agent ALL=(ALL) NOPASSWD:ALL\n' >/etc/sudoers.d/90-cagent-agent \
+    && chmod 0440 /etc/sudoers.d/90-cagent-agent \
+    && mkdir -p /workspace \
+    && chown agent:agent /workspace
+
+USER agent
+WORKDIR /workspace
