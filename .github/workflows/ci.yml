@@ -65,7 +65,25 @@ jobs:
           jq -e '.host.security.rootless == true' <<<"${podman_info}"
           jq -e '(.host.cgroupVersion == "v2") or (.host.cgroupVersion == "2") or (.host.cgroupVersion == 2)' <<<"${podman_info}"
       - name: Full managed lifecycle integration
-        run: make integration
+        run: |
+          set +e
+          make integration 2>&1 | tee "${RUNNER_TEMP}/cagent-integration.log"
+          integration_status="${PIPESTATUS[0]}"
+          set -e
+          if test "${integration_status}" -ne 0; then
+            {
+              echo "## Podman integration failure"
+              echo '```text'
+              tail -n 80 "${RUNNER_TEMP}/cagent-integration.log"
+              echo '```'
+            } >> "${GITHUB_STEP_SUMMARY}"
+            annotation="$(tail -n 40 "${RUNNER_TEMP}/cagent-integration.log")"
+            annotation="${annotation//'%'/'%25'}"
+            annotation="${annotation//$'\r'/'%0D'}"
+            annotation="${annotation//$'\n'/'%0A'}"
+            echo "::error file=Makefile,line=43,title=Podman integration failed::${annotation}"
+          fi
+          exit "${integration_status}"
       - name: Verify integration left no managed containers
         if: always()
         run: |
