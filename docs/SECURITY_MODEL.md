@@ -70,3 +70,6 @@ plan, especially destructive actions and policy exceptions. Prefer read-only
 project mounts for diagnostics, use `sandbox` for unknown images, provision
 secrets through Podman rather than environment variables, and inspect
 `cagent env diff` before recreating drifted environments.
+
+The [full usage guide](USAGE_GUIDE.md) contains applied examples for mount
+roots, secrets, certificates, networking, confirmations, and safe cleanup.

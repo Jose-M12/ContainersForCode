@@ -1,5 +1,9 @@
 # Implementation status
 
+User workflows are documented in the [full usage guide](USAGE_GUIDE.md),
+[cheat sheet](CHEATSHEET.md), and
+[image/operating-system guide](IMAGES_AND_OTHER_OS.md).
+
 The current release is `0.1.0-alpha.1` and implements the Linux-first,
 single-container `containersagents.dev/v2alpha1` MVP.
 

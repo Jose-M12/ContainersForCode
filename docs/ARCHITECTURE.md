@@ -1,5 +1,8 @@
 # Architecture
 
+This document describes internals. For operational workflows, start with the
+[full usage guide](USAGE_GUIDE.md) or [cheat sheet](CHEATSHEET.md).
+
 ContainersAgents V2 is a local controller for isolated, single-container work
 environments. The `cagent` binary owns desired state and invokes the rootless
 Podman CLI directly. There is no daemon, socket integration, or background

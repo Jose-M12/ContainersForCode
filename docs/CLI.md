@@ -1,5 +1,10 @@
 # CLI reference
 
+For workflow explanations and examples, use the
+[full usage guide](USAGE_GUIDE.md). For a compact daily reference, use the
+[cheat sheet](CHEATSHEET.md). Custom image workflows are documented in
+[Other operating systems and images](IMAGES_AND_OTHER_OS.md).
+
 All commands return exit code `0` on success. Usage errors return `2`, policy
 denials return `3`, missing required resources return `4`, and runtime or health
 failures return `1`. Commands that support `--output` accept `human` or `json`.
@@ -23,6 +28,11 @@ command executed inside a container.
 `--containerfile FILE --context DIR`. It also accepts `--project-mode`,
 `--security`, `--resource`, and `--rootfs`. Custom profile creation accepts
 `--shell`, `--keepalive`, `--user`, `--home`, and `--workdir`.
+
+```text
+cagent env init NAME --profile PROFILE --project DIR
+cagent env init NAME --containerfile FILE --context DIR --project DIR
+```
 
 | Command | Purpose and important options |
 | --- | --- |
@@ -54,7 +64,9 @@ cagent run --image IMAGE [--project DIR] [--project-mode read-only|read-write]
 ```
 
 The run is ephemeral and auto-removed. A project mount is optional and defaults
-to read-only. The default resource class is `battery`.
+to read-only. The default resource class is `battery`. Raw runs directly use
+the adaptive `battery`, `balanced`, or `performance` classes; custom resource
+values require a managed environment manifest.
 
 ## Host and disk
 

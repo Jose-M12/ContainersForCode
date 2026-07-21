@@ -17,6 +17,16 @@ This repository implements the Linux-first `v2alpha1` single-container MVP. The 
 
 Podman-backed integration tests require a rootless Podman host and are opt-in. Multi-container stacks, remote hosts, feature composition, domain-aware egress enforcement, and a GUI remain intentionally out of scope.
 
+## Documentation
+
+| Start here | Purpose |
+| --- | --- |
+| [Documentation index](docs/README.md) | Map of all user, design, security, and release documentation. |
+| [Full usage guide](docs/USAGE_GUIDE.md) | Installation, configuration, profiles, environments, lifecycle, policy, persistence, networking, secrets, cleanup, automation, and troubleshooting. |
+| [Usage cheat sheet](docs/CHEATSHEET.md) | Short daily command reference. |
+| [Other operating systems and images](docs/IMAGES_AND_OTHER_OS.md) | Host OS boundaries and how to use OCI/Docker images, local Podman images, archives, Dockerfiles, and Containerfiles. |
+| [CLI reference](docs/CLI.md) | Command and option reference. |
+
 ## Build
 
 Requirements:
@@ -33,6 +43,9 @@ make build
 ```
 
 No third-party Go modules are required.
+
+For host preparation, user-local installation, defaults, and verification, use
+the [full usage guide](docs/USAGE_GUIDE.md#2-supported-host-and-prerequisites).
 
 CI repeats these checks with the race detector and cross-builds, then runs the
 full managed lifecycle on an Ubuntu rootless-Podman, cgroups-v2 runner. The
@@ -69,6 +82,10 @@ cagent env init customer-lab \
 
 This creates a local profile manifest whose context and Containerfile paths are absolute. It does not copy the build context or customer files into V2 configuration.
 
+See [Other operating systems and images](docs/IMAGES_AND_OTHER_OS.md) for full
+pull-profile, existing-image, archive, Dockerfile, Containerfile, registry, and
+image-update workflows.
+
 ## Raw OCI image
 
 ```bash
@@ -82,4 +99,5 @@ Raw runs are ephemeral, auto-removed, resource-limited, capability-dropped, and 
 
 Hard MVP denials include privileged mode, host namespaces/network, host root/home/system mounts, container-engine sockets, unvalidated devices, global cleanup, and secret-like values in manifest environment variables or build arguments. Non-loopback port publication, external mount roots, aggregate-memory overcommit, recreation, deletion, and managed cleanup require explicit flags and confirmation tokens.
 
-See [Security model](docs/SECURITY_MODEL.md), [architecture](docs/ARCHITECTURE.md), [container image pins](docs/IMAGE_PINS.md), [CLI reference](docs/CLI.md), and [implementation status](docs/IMPLEMENTATION_STATUS.md).
+See the [documentation index](docs/README.md) for every guide, schema, and
+design document.
