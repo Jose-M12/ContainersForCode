@@ -3,6 +3,7 @@
 package integration_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -51,6 +52,13 @@ func TestRootlessPodmanRawRun(t *testing.T) {
 	runtimeDirectory := filepath.Join(root, "runtime")
 	if err := os.Mkdir(runtimeDirectory, 0700); err != nil {
 		t.Fatalf("create integration runtime directory: %v", err)
+	}
+	podmanConfigDirectory := filepath.Join(root, "config", "containers")
+	if err := os.MkdirAll(podmanConfigDirectory, 0700); err != nil {
+		t.Fatalf("create Podman configuration directory: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(podmanConfigDirectory, "containers.conf"), []byte("[engine]\ncgroup_manager = \"cgroupfs\"\n"), 0600); err != nil {
+		t.Fatalf("write isolated Podman configuration: %v", err)
 	}
 	baseEnv := append(os.Environ(),
 		"XDG_CONFIG_HOME="+filepath.Join(root, "config"),
@@ -217,11 +225,14 @@ func runCagent(t *testing.T, binary string, environment []string, args ...string
 	t.Helper()
 	command := exec.Command(binary, args...)
 	command.Env = environment
-	output, err := command.CombinedOutput()
+	var stdout, stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	err := command.Run()
 	if err != nil {
-		t.Fatalf("cagent %s: %v\n%s", strings.Join(args, " "), err, output)
+		t.Fatalf("cagent %s: %v\nstdout:\n%s\nstderr:\n%s", strings.Join(args, " "), err, stdout.Bytes(), stderr.Bytes())
 	}
-	return output
+	return stdout.Bytes()
 }
 
 func runCagentJSON(t *testing.T, binary string, environment []string, args ...string) map[string]any {
