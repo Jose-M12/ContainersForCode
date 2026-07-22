@@ -48,20 +48,28 @@ func TestRootlessPodmanRawRun(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create integration root: %v", err)
 	}
+	runtimeDirectory := filepath.Join(root, "runtime")
+	if err := os.Mkdir(runtimeDirectory, 0700); err != nil {
+		t.Fatalf("create integration runtime directory: %v", err)
+	}
 	baseEnv := append(os.Environ(),
 		"XDG_CONFIG_HOME="+filepath.Join(root, "config"),
 		"XDG_DATA_HOME="+filepath.Join(root, "data"),
 		"XDG_CACHE_HOME="+filepath.Join(root, "cache"),
 		"XDG_STATE_HOME="+filepath.Join(root, "state"),
+		"XDG_RUNTIME_DIR="+runtimeDirectory,
 	)
 	t.Cleanup(func() {
-		// Rootless image layers can contain subordinate-UID-owned paths that
-		// os.RemoveAll cannot traverse. Remove only this test's isolated root
-		// from the same user namespace Podman used to create those paths.
-		command := exec.Command("podman", "unshare", "rm", "-rf", "--", root)
+		// Podman must unmount rootless overlay storage before Go can remove it.
+		// Every XDG storage and runtime path is under this random test root, so
+		// the reset cannot affect the user's normal Podman storage.
+		command := exec.Command("podman", "system", "reset", "--force")
 		command.Env = baseEnv
 		if output, cleanupErr := command.CombinedOutput(); cleanupErr != nil {
-			t.Errorf("remove integration root %s: %v\n%s", root, cleanupErr, output)
+			t.Errorf("reset isolated Podman storage at %s: %v\n%s", root, cleanupErr, output)
+		}
+		if cleanupErr := os.RemoveAll(root); cleanupErr != nil {
+			t.Errorf("remove integration root %s: %v", root, cleanupErr)
 		}
 	})
 
