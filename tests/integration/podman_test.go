@@ -44,13 +44,26 @@ func TestRootlessPodmanRawRun(t *testing.T) {
 		t.Fatalf("cagent binary is unavailable at %s; run make build first: %v", binary, err)
 	}
 
-	root := t.TempDir()
+	root, err := os.MkdirTemp("", "cagent-integration-")
+	if err != nil {
+		t.Fatalf("create integration root: %v", err)
+	}
 	baseEnv := append(os.Environ(),
 		"XDG_CONFIG_HOME="+filepath.Join(root, "config"),
 		"XDG_DATA_HOME="+filepath.Join(root, "data"),
 		"XDG_CACHE_HOME="+filepath.Join(root, "cache"),
 		"XDG_STATE_HOME="+filepath.Join(root, "state"),
 	)
+	t.Cleanup(func() {
+		// Rootless image layers can contain subordinate-UID-owned paths that
+		// os.RemoveAll cannot traverse. Remove only this test's isolated root
+		// from the same user namespace Podman used to create those paths.
+		command := exec.Command("podman", "unshare", "rm", "-rf", "--", root)
+		command.Env = baseEnv
+		if output, cleanupErr := command.CombinedOutput(); cleanupErr != nil {
+			t.Errorf("remove integration root %s: %v\n%s", root, cleanupErr, output)
+		}
+	})
 
 	version := exec.Command(binary, "version", "--output", "json")
 	version.Env = baseEnv
